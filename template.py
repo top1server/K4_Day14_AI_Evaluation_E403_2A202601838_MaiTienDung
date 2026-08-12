@@ -13,11 +13,11 @@ Key concepts from lecture:
     - CI/CD integration: eval as quality gate (score < threshold = block deploy)
     - Continuous Improvement Loop: Evaluate → Analyze → Improve → Augment → Repeat
 
-Instructions:
-    1. Fill in every required section marked with TODO.
-    2. Do NOT change class/function signatures. The optional ``contexts``
-       parameter in ``run_full_eval`` is part of the required interface.
-    3. Copy this file to solution/solution.py when done.
+Implementation notes:
+    1. The required evaluation core and optional reranking bonus are complete.
+    2. The optional ``contexts`` parameter in ``run_full_eval`` is part of the
+       required interface.
+    3. ``solution/solution.py`` is kept as a copy of this implementation.
     4. Run: pytest tests/ -v
 
 The reranking helper is an optional bonus exercise and may remain unimplemented.
