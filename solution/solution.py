@@ -54,11 +54,6 @@ class QAPair:
         retrieved_contexts: List of retrieved chunks (ORDER = retriever rank).
                             Used by the retrieval-side metrics (Task 2b).
     """
-    # TODO: define fields
-    # Hints:
-    #   context: str = ""
-    #   metadata: dict = field(default_factory=dict)
-    #   retrieved_contexts: list = field(default_factory=list)
     question: str
     expected_answer: str
     context: str = ""
@@ -94,11 +89,6 @@ class EvalResult:
                         (Both stay None unless retrieved chunks are supplied;
                          they are NOT part of overall_score().)
     """
-    # TODO: define fields
-    # Hints:
-    #   failure_type: str | None = None
-    #   context_precision: float | None = None
-    #   context_recall: float | None = None
     qa_pair: QAPair
     actual_answer: str
     faithfulness: float
@@ -115,7 +105,6 @@ class EvalResult:
         Returns:
             (faithfulness + relevance + completeness) / 3.0
 
-        TODO: Return mean of the three metric scores
         """
         return (self.faithfulness + self.relevance + self.completeness) / 3.0
 
@@ -406,7 +395,6 @@ class LLMJudge:
     """
 
     def __init__(self, judge_llm_fn: Callable[[str], str]) -> None:
-        # TODO: store judge_llm_fn
         self.judge_llm_fn = judge_llm_fn
 
     def score_response(
@@ -642,7 +630,6 @@ class BenchmarkRunner:
               - 'regressions': list[str] — names of metrics that regressed
               - 'passed': bool — True if no regressions
 
-        TODO: Compute avg per metric, compare, list regressions, set passed flag
         """
         metrics = ("faithfulness", "relevance", "completeness")
 
@@ -779,7 +766,6 @@ class FailureAnalyzer:
         Returns:
             Markdown table string with a row per failure. Status is always "Open".
 
-        TODO: Build markdown table with failure details + matched suggestions
         """
         lines = [
             "| Failure ID | Type | Root Cause | Suggested Fix | Status |",
