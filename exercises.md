@@ -30,11 +30,11 @@ critical.
 
 | Metric | Acceptable Low Score Scenario | Critical Low Score Scenario | Action Required |
 |---|---|---|---|
-| Faithfulness | | | |
-| Answer Relevance | | | |
-| Context Recall | | | |
-| Context Precision | | | |
-| Completeness | | | |
+| Faithfulness | Câu trả lời chủ động từ chối/ghi rõ không đủ evidence khi context thiếu hoặc lỗi thời; không đưa claim thực tế không có nguồn. | Có claim về chính sách, đơn hàng, hoàn tiền... không được context hỗ trợ (hallucination), dù câu trả lời nghe có vẻ hợp lý. | Log theo dõi case abstain và bổ sung/cập nhật corpus; với claim không có evidence thì block hoặc route human review. |
+| Answer Relevance | Câu hỏi ngoài phạm vi hoặc không an toàn được chuyển hướng ngắn gọn, đúng chính sách nên overlap với câu hỏi có thể thấp. | Câu hỏi support trong phạm vi nhưng câu trả lời lạc đề hoặc không giải quyết ý định chính của user. | Kiểm tra intent routing/prompt; thêm các câu cùng intent vào golden set và sửa retrieval hoặc prompt. |
+| Context Recall | Câu trả lời chỉ cần một phần thông tin và phần context thiếu là chi tiết không thiết yếu; hệ thống nói rõ phạm vi trả lời. | Retriever bỏ sót evidence cần cho đáp án hoặc policy bắt buộc, khiến model không thể trả lời đúng/đủ. | Bổ sung chunk, cải thiện indexing/query expansion và kiểm tra coverage theo từng loại câu hỏi. |
+| Context Precision | Retriever lấy thêm vài chunk nhiễu nhưng evidence liên quan vẫn ở đầu danh sách và câu trả lời vẫn grounded. | Chunk đầu bảng xếp hạng chủ yếu không liên quan, làm tăng chi phí và dẫn model tới evidence sai. | Tuning ranking/reranking, lọc duplicate/noise và đặt giới hạn top-k hợp lý. |
+| Completeness | User chỉ yêu cầu câu trả lời ngắn hoặc một trường thông tin; chi tiết bị lược bỏ không làm thay đổi quyết định của user. | Bỏ sót bước, điều kiện, ngoại lệ hoặc thông tin hành động bắt buộc trong câu trả lời support. | So khớp với expected answer, bổ sung rubric/prompt về các ý bắt buộc và thêm regression cases. |
 
 ### Exercise 1.2 — Bias trong LLM-as-a-Judge
 
@@ -46,15 +46,15 @@ Ba bias thường gặp:
 
 **Câu 1: Thiết kế experiment phát hiện position bias với ít nhất hai conditions.**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Dùng cùng một tập câu hỏi và các cặp đáp án A/B đã được human label; giữ nội dung, độ dài và rubric cố định. Condition 1: judge thấy A trước, B sau. Condition 2: đảo thứ tự để B trước, A sau. Phân ngẫu nhiên và cân bằng số mẫu ở hai condition, ẩn tên model/nguồn đáp án. So sánh tỷ lệ thắng và điểm của cùng một đáp án khi đứng trước với khi đứng sau (có thể dùng paired test/CI). Nếu một đáp án thắng đáng kể chỉ vì ở vị trí đầu, đó là position bias.
 
 **Câu 2: Làm thế nào giảm verbosity bias bằng rubric design?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Rubric cần chấm trực tiếp correctness, evidence/faithfulness và mức độ đáp ứng yêu cầu, với mô tả điểm 1–5 rõ ràng. Ghi rõ “không cộng điểm cho chi tiết không cần thiết hoặc độ dài”, thưởng cho câu trả lời ngắn nhưng đủ, và trừ điểm cho lặp lại/lan man. Có thể yêu cầu judge đánh giá từng tiêu chí độc lập trước khi tổng hợp; nếu cần chấm độ dài, tách thành tiêu chí conciseness riêng thay vì để nó ảnh hưởng accuracy.
 
 **Câu 3: Tại sao cần calibrate LLM judge với human labels?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Human labels là chuẩn tham chiếu cho định nghĩa “đúng”, “đủ” và mức độ chấp nhận được trong domain. Calibration cho biết judge có tương quan/độ đồng thuận với người chấm hay không, phát hiện thiên lệch hệ thống (quá dễ, quá nghiêm hoặc ưu tiên văn phong của chính nó), và giúp chọn prompt, rubric, threshold phù hợp. Cần lặp lại calibration khi domain, rubric hoặc model judge thay đổi để tránh quality gate bị lệch.
 
 ### Exercise 1.3 — Evaluation trong CI/CD
 
@@ -62,13 +62,13 @@ Ba bias thường gặp:
 
 | Metric | Threshold | Lý do |
 |---|---:|---|
-| Faithfulness | | |
-| Answer Relevance | | |
-| Completeness | | |
+| Faithfulness | 0.80 | Claim không grounded có thể tạo thông tin sai về chính sách/đơn hàng; đặt ngưỡng cao hơn các metric còn lại. |
+| Answer Relevance | 0.75 | Dưới mức này câu trả lời thường không xử lý đúng ý định chính, nhưng cho phép một ít biến thiên ở câu hỏi đa ý hoặc route an toàn. |
+| Completeness | 0.75 | Bảo đảm phần lớn thông tin hành động/điều kiện cần thiết có mặt; các thiếu sót có tính hệ thống phải chặn release. |
 
 **Câu 2: Khi nào dùng offline evaluation, online evaluation và human review?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Offline evaluation dùng golden dataset phiên bản hoá trong CI, trước merge/release, để phát hiện regression có thể tái lập và áp dụng các threshold quality gate. Online evaluation dùng sau deploy trên traffic thật (đã bảo vệ dữ liệu cá nhân), kết hợp telemetry, user feedback, sampled evaluation để theo dõi drift, latency, tỷ lệ escalation và những intent mới mà golden set chưa đại diện. Human review dùng cho case rủi ro cao hoặc mơ hồ (refund, policy, safety), mẫu thất bại/điểm sát ngưỡng, disagreement giữa judge và metric, và các đợt calibration/audit; kết quả review được đưa lại golden dataset.
 
 ---
 
